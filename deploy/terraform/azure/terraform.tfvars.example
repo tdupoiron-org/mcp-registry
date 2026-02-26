@@ -1,0 +1,21 @@
+# Copy this file to terraform.tfvars and fill in the values.
+# terraform.tfvars is gitignored – do NOT commit secrets.
+
+# Required
+db_password          = "change-me-strong-password"
+github_client_id     = "Iv23licy3GSiM9Km5jtd"
+github_client_secret = "<your-github-oauth-app-client-secret>"
+jwt_private_key      = "<32-byte hex seed: openssl rand -hex 32>"
+
+# Optional – restrict inbound traffic to your public IP (CIDR notation)
+# allowed_ip_address = "203.0.113.42/32"
+
+# Optional overrides
+# resource_group_name            = "mcp-registry-rg"
+# location                       = "West Europe"
+# container_registry_name        = "mcpregistry16287"
+# container_app_name             = "mcp-registry"
+# container_app_environment_name = "mcp-registry-env"
+# log_analytics_workspace_name   = "mcp-registry-logs"
+# image_tag                      = "latest"
+# environment                    = "prod"

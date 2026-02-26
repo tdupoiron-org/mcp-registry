@@ -1,0 +1,26 @@
+# Local .terraform directory (provider binaries, state cache)
+.terraform/
+
+# terraform.tfvars may contain secrets – never commit
+terraform.tfvars
+*.tfvars
+# Allow the example vars file
+!*.tfvars.example
+
+# State files
+*.tfstate
+*.tfstate.backup
+
+# Crash log
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI config
+.terraformrc
+terraform.rc
