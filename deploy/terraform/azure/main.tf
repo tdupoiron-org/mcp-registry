@@ -6,11 +6,28 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
+}
+
+# Auto-generate a JWT signing key if one is not provided
+resource "random_id" "jwt_key" {
+  byte_length = 32
+}
+
+locals {
+  effective_jwt_key = var.jwt_private_key != "" ? var.jwt_private_key : random_id.jwt_key.hex
 }
 
 resource "azurerm_resource_group" "main" {

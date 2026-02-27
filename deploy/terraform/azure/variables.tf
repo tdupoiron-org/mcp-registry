@@ -53,20 +53,23 @@ variable "db_password" {
 }
 
 variable "github_client_id" {
-  description = "GitHub OAuth App client ID"
+  description = "GitHub OAuth App client ID (leave empty to enable anonymous auth)"
   type        = string
+  default     = ""
 }
 
 variable "github_client_secret" {
-  description = "GitHub OAuth App client secret"
+  description = "GitHub OAuth App client secret (leave empty to enable anonymous auth)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "jwt_private_key" {
-  description = "32-byte Ed25519 seed for JWT signing (hex-encoded). Generate with: openssl rand -hex 32"
+  description = "32-byte Ed25519 seed for JWT signing (hex-encoded). Auto-generated if empty. Generate with: openssl rand -hex 32"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "environment" {

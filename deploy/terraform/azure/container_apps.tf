@@ -1,9 +1,8 @@
 locals {
-  db_name     = "mcp-registry"
-  db_user     = "mcpregistry"
-  db_host     = "postgres"
-  db_port     = 5432
-  database_url = "postgres://${local.db_user}:${var.db_password}@${local.db_host}:${local.db_port}/${local.db_name}"
+  db_name      = "mcp-registry"
+  db_user      = "mcpregistry"
+  db_port      = 5432
+  database_url = "postgres://${local.db_user}:${var.db_password}@${azurerm_postgresql_flexible_server.main.fqdn}:${local.db_port}/${local.db_name}?sslmode=require"
 
   # Build the IP security restriction list. When allowed_ip_address is set,
   # restrict inbound traffic to that CIDR; otherwise allow all traffic.
@@ -30,6 +29,12 @@ resource "azurerm_container_app" "main" {
   resource_group_name          = azurerm_resource_group.main.name
   revision_mode                = "Single"
 
+  depends_on = [
+    azurerm_postgresql_flexible_server_database.main,
+    azurerm_postgresql_flexible_server_configuration.extensions,
+    azurerm_postgresql_flexible_server_firewall_rule.allow_azure_services,
+  ]
+
   registry {
     server               = azurerm_container_registry.main.login_server
     username             = azurerm_container_registry.main.admin_username
@@ -43,12 +48,12 @@ resource "azurerm_container_app" "main" {
 
   secret {
     name  = "github-client-secret"
-    value = var.github_client_secret
+    value = coalesce(var.github_client_secret, "not-configured")
   }
 
   secret {
     name  = "jwt-private-key"
-    value = var.jwt_private_key
+    value = local.effective_jwt_key
   }
 
   secret {
@@ -90,7 +95,7 @@ resource "azurerm_container_app" "main" {
 
       env {
         name  = "MCP_REGISTRY_ENABLE_ANONYMOUS_AUTH"
-        value = "false"
+        value = var.github_client_id == "" ? "true" : "false"
       }
     }
 
