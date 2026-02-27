@@ -544,8 +544,9 @@ resource "kubernetes_secret" "k8up_backup_credentials" {
 }
 
 # Kubernetes Secret: restic repository encryption password.
-# GCS provides at-rest encryption, so this password is a restic formality
-# rather than the primary data protection mechanism.
+# Restic encrypts all backup data client-side before uploading to GCS.
+# Use a strong randomly generated password (e.g. `openssl rand -base64 32`);
+# losing this password means losing access to all backup data.
 resource "kubernetes_secret" "k8up_repo_password" {
   metadata {
     name      = "k8up-repo-password"
@@ -559,7 +560,7 @@ resource "kubernetes_secret" "k8up_repo_password" {
   type = "Opaque"
 
   data = {
-    password = "password"
+    password = var.k8up_repo_password
   }
 }
 
@@ -623,7 +624,10 @@ resource "kubernetes_manifest" "k8up_schedule" {
       backup = {
         schedule = "46 4 * * *"
 
-        # Run the backup sidecar as root so it can read all pod volume mounts.
+        # k8up's backup sidecar must run as root (UID 0) to traverse all pod
+        # volume mounts regardless of the owning container's UID.  This matches
+        # the upstream k8up recommendation and the existing Pulumi configuration.
+        # See: https://k8up.io/k8up/2.x/how-tos/backup.html#_security_context
         podSecurityContext = {
           runAsUser = 0
         }

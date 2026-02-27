@@ -63,6 +63,19 @@ variable "jwt_private_key" {
   sensitive   = true
 }
 
+variable "k8up_repo_password" {
+  description = <<-EOT
+    Restic repository encryption password used by k8up.
+    Although GCS provides at-rest encryption, restic requires a non-empty
+    repository password for its own encryption layer.  Use a strong, randomly
+    generated value (e.g. `openssl rand -base64 32`).
+    Stored in the 'k8up-repo-password' Kubernetes Secret.
+    Mark as sensitive in HCP Terraform; never commit to source control.
+  EOT
+  type        = string
+  sensitive   = true
+}
+
 variable "project_id" {
   description = "GCP project ID in which all infrastructure resources are created."
   type        = string

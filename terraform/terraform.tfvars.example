@@ -42,5 +42,9 @@
 # RSA private key (PEM) for JWT signing
 # jwt_private_key = "..."         # Set via TF_VAR_jwt_private_key
 
+# Restic repository encryption password (strong random value required)
+# k8up_repo_password = "..."  # Set via TF_VAR_k8up_repo_password
+#                              # Generate with: openssl rand -base64 32
+
 # Google OAuth client secret for Grafana SSO
 # google_oauth_client_secret = "..."  # Set via TF_VAR_google_oauth_client_secret

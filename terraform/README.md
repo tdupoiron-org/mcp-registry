@@ -147,6 +147,7 @@ terraform output -raw get_credentials_command | bash
 | `github_client_secret` | GitHub OAuth App Client Secret | — | **Yes** |
 | `jwt_private_key` | RSA private key (PEM) for JWT signing | — | **Yes** |
 | `google_oauth_client_secret` | Google OAuth client secret for Grafana | — | **Yes** |
+| `k8up_repo_password` | Restic repo encryption password (use `openssl rand -base64 32`) | — | **Yes** |
 | `image_tag` | Docker image tag for the registry app | `main` | No |
 
 ---
