@@ -1,0 +1,46 @@
+# terraform.tfvars.example — Example variable values for the mcp-registry Terraform module
+#
+# Copy this file to terraform.tfvars and fill in the non-sensitive values.
+# DO NOT store sensitive values in terraform.tfvars or commit them to git.
+#
+# Sensitive variables should be supplied via one of:
+#   1. HCP Terraform workspace variables (recommended for CI/CD)
+#   2. Shell environment variables: export TF_VAR_<name>="value"
+#   3. A secrets manager integrated with your Terraform workflow
+
+# ---------------------------------------------------------------------------
+# Required — no defaults
+# ---------------------------------------------------------------------------
+
+# GCP project ID.  Separate projects per environment is strongly recommended.
+# project_id = "mcp-registry-staging"
+
+# Deployment environment: "staging" or "prod"
+# environment = "staging"
+
+# GitHub OAuth App Client ID (public value — safe to commit)
+# github_client_id = "Iv23liB2r5oUw6PxiMOC"
+
+# ---------------------------------------------------------------------------
+# Optional — defaults shown
+# ---------------------------------------------------------------------------
+
+# GCP region for the GKE cluster.  Zone is derived as "<region>-b".
+# region = "us-central1"
+
+# Docker image tag for ghcr.io/modelcontextprotocol/registry.
+# Use "main" to track the latest staging build, or pin to a release tag for prod.
+# image_tag = "main"
+
+# ---------------------------------------------------------------------------
+# Sensitive — NEVER put real values here; use env vars or HCP Terraform
+# ---------------------------------------------------------------------------
+
+# GitHub OAuth App Client Secret
+# github_client_secret = "..."   # Set via TF_VAR_github_client_secret
+
+# RSA private key (PEM) for JWT signing
+# jwt_private_key = "..."         # Set via TF_VAR_jwt_private_key
+
+# Google OAuth client secret for Grafana SSO
+# google_oauth_client_secret = "..."  # Set via TF_VAR_google_oauth_client_secret
