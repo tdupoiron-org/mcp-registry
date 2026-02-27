@@ -1,0 +1,114 @@
+name: Terraform – Deploy Azure Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+      - copilot/create-terraform-project
+    paths:
+      - 'deploy/terraform/azure/**'
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy infrastructure instead of applying'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  TF_WORKING_DIR: deploy/terraform/azure
+  TF_VERSION: '1.9.0'
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.destroy == 'true' && 'Destroy' || 'Apply' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: azure
+      url: ${{ steps.app_url.outputs.url }}
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        if: ${{ inputs.destroy != 'true' }}
+        run: |
+          terraform plan \
+            -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}" \
+            -var="github_client_id=${{ secrets.TF_VAR_GITHUB_CLIENT_ID }}" \
+            -var="github_client_secret=${{ secrets.TF_VAR_GITHUB_CLIENT_SECRET }}" \
+            -var="jwt_private_key=${{ secrets.TF_VAR_JWT_PRIVATE_KEY }}" \
+            -out=tfplan \
+            -no-color \
+            -input=false 2>&1 | tee /tmp/tfplan.txt
+        env:
+          TF_VAR_image_tag: ${{ github.sha }}
+
+      - name: Terraform Plan (Destroy)
+        if: ${{ inputs.destroy == 'true' }}
+        run: |
+          terraform plan -destroy \
+            -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}" \
+            -var="github_client_id=${{ secrets.TF_VAR_GITHUB_CLIENT_ID }}" \
+            -var="github_client_secret=${{ secrets.TF_VAR_GITHUB_CLIENT_SECRET }}" \
+            -var="jwt_private_key=${{ secrets.TF_VAR_JWT_PRIVATE_KEY }}" \
+            -out=tfplan \
+            -no-color \
+            -input=false 2>&1 | tee /tmp/tfplan.txt
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false tfplan
+
+      - name: Get Container App URL
+        id: app_url
+        if: ${{ inputs.destroy != 'true' }}
+        run: |
+          URL=$(terraform output -raw container_app_url 2>/dev/null || echo "")
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Write Job Summary
+        if: ${{ inputs.destroy != 'true' }}
+        run: |
+          URL="${{ steps.app_url.outputs.url }}"
+          echo "## Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ----- | ----- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Environment** | Azure Container Apps |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Region** | $(terraform output -raw resource_group_name 2>/dev/null || echo 'N/A') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Registry** | $(terraform output -raw container_registry_login_server 2>/dev/null || echo 'N/A') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **App URL** | [${URL}](${URL}) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **API Servers endpoint** | [${URL}/v0/servers](${URL}/v0/servers) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write Destroy Summary
+        if: ${{ inputs.destroy == 'true' }}
+        run: |
+          echo "## Destroy Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "All Azure infrastructure resources have been destroyed." >> "$GITHUB_STEP_SUMMARY"
